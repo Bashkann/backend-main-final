@@ -1,28 +1,32 @@
-var mongoose = require("mongoose");
-require("dotenv").config();
+const mongoose = require("mongoose");
 
-// Eğer .env içinde MONGODB_URI varsa Atlas kullanılır,
-// yoksa localhost/mekanbul'a bağlanır
-var dbURI = process.env.MONGODB_URI || "mongodb://localhost/mekanbul";
+const dbURI = process.env.MONGODB_URI;
 
-mongoose.connect(dbURI);
+if (!dbURI) {
+  throw new Error("❌ MONGODB_URI environment variable tanımlı değil");
+}
 
-mongoose.connection.on("connected", function () {
-  console.log("Mongoose " + dbURI + " adresindeki veritabanına bağlandı.");
-});
+// Vercel serverless için cache
+let cached = global.mongoose;
 
-mongoose.connection.on("error", function (err) {
-  console.log("Mongoose bağlantı hatası:", err);
-});
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
-mongoose.connection.on("disconnected", function () {
-  console.log("Mongoose bağlantısı kesildi.");
-});
+async function connectDB() {
+  if (cached.conn) return cached.conn;
 
-process.on("SIGINT", function () {
-  mongoose.connection.close();
-  console.log("Mongoose uygulama sonlandırma nedeniyle bağlantıyı kapattı.");
-  process.exit(0);
-});
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(dbURI, {
+      bufferCommands: false,
+    });
+  }
+
+  cached.conn = await cached.promise;
+  console.log("✅ MongoDB Cloud bağlantısı kuruldu");
+  return cached.conn;
+}
+
+connectDB();
 
 require("./venue");
