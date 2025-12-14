@@ -1,32 +1,25 @@
+// MongoDB bağlantısı için mongoose'u çağırıyoruz
 const mongoose = require("mongoose");
 
+// Vercel'den gelen ortam değişkeni (MONGODB_URI)
 const dbURI = process.env.MONGODB_URI;
 
-if (!dbURI) {
-  throw new Error("❌ MONGODB_URI environment variable tanımlı değil");
-}
+// Mongoose ayarı (uyarıları kapatır)
+mongoose.set("strictQuery", true);
 
-// Vercel serverless için cache
-let cached = global.mongoose;
+// MongoDB'ye bağlan
+mongoose
+  .connect(dbURI, {
+    // Eğer 10 saniyede bağlanamazsa hata versin
+    // (Vercel 504 timeout'a düşmesin diye)
+    serverSelectionTimeoutMS: 10000,
+  })
+  .then(() => {
+    console.log("✅ MongoDB bağlantısı başarılı");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB bağlantı hatası:", err);
+  });
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-async function connectDB() {
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(dbURI, {
-      bufferCommands: false,
-    });
-  }
-
-  cached.conn = await cached.promise;
-  console.log("✅ MongoDB Cloud bağlantısı kuruldu");
-  return cached.conn;
-}
-
-connectDB();
-
-require("./venue");
+// mongoose'u dışarı açıyoruz
+module.exports = mongoose;
