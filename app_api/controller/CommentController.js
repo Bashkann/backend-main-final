@@ -1,6 +1,7 @@
 
 var mongoose = require('mongoose');
 var Venue = mongoose.model("venue");
+require("../models/venue");
 
 const createResponse = function (res, status, content) {
     res.status(status).json(content);

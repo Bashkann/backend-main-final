@@ -1,6 +1,12 @@
 
 var mongoose = require('mongoose');
 var Venue = mongoose.model("venue");
+var mongoose = require("mongoose");
+
+// ✅ Venue modelini burada da kesin yükle (serverless sıra problemi olmasın diye)
+require("../models/venue");
+
+var Venue = mongoose.model("venue");
 
 const createResponse = function (res, status, content) {
     res.status(status).json(content);
