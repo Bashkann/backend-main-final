@@ -1,26 +1,27 @@
 const mongoose = require("mongoose");
 
-// Vercel ortam değişkeninden MongoDB adresini alıyoruz
+// MongoDB bağlantı adresini ortam değişkeninden alıyoruz
 const dbURI = process.env.MONGODB_URI;
 
-// Gereksiz mongoose uyarılarını kapatır
+// Mongoose ayarları
 mongoose.set("strictQuery", true);
 
-// MongoDB bağlantısını kur
-mongoose
-  .connect(dbURI, {
-    // 10 saniyede bağlanamazsa hata versin
-    serverSelectionTimeoutMS: 10000,
-  })
-  .then(() => {
-    console.log("✅ MongoDB bağlantısı başarılı");
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB bağlantı hatası:", err);
-  });
+// MongoDB bağlantısı
+mongoose.connect(dbURI, {
+  serverSelectionTimeoutMS: 10000
+});
 
-// ⬇️⬇️⬇️ EN KRİTİK SATIR ⬇️⬇️⬇️
-// Venue modelini mongoose'a tanıtıyoruz
+// Bağlantı başarılıysa
+mongoose.connection.on("connected", () => {
+  console.log("✅ MongoDB bağlantısı kuruldu");
+});
+
+// Bağlantı hatası
+mongoose.connection.on("error", (err) => {
+  console.log("❌ MongoDB bağlantı hatası:", err);
+});
+
+// ⬇️ MODELİ MUTLAKA BAĞLANTIDAN SONRA YÜKLE
 require("./venue");
 
 module.exports = mongoose;
